@@ -65,6 +65,10 @@ class ChatViewModel: ObservableObject {
     
     @Published var favoritePeers: Set<String> = []  // Now stores public key fingerprints instead of peer IDs
     private var peerIDToPublicKeyFingerprint: [String: String] = [:]  // Maps ephemeral peer IDs to persistent fingerprints
+
+    // Relay statistics
+    @Published var relayedMessageCount: Int = 0
+    private let relayCountKey = "bitchat.relayCount"
     
     // Messages are naturally ephemeral - no persistent storage
     
@@ -76,6 +80,7 @@ class ChatViewModel: ObservableObject {
         loadFavorites()
         loadJoinedChannels()
         loadChannelData()
+        loadRelayCount()
         // Load saved channels state
         savedChannels = MessageRetentionService.shared.getFavoriteChannels()
         meshService.delegate = self
@@ -156,6 +161,20 @@ class ChatViewModel: ObservableObject {
     private func saveFavorites() {
         userDefaults.set(Array(favoritePeers), forKey: favoritesKey)
         userDefaults.synchronize()
+    }
+
+    private func loadRelayCount() {
+        relayedMessageCount = userDefaults.integer(forKey: relayCountKey)
+    }
+
+    private func saveRelayCount() {
+        userDefaults.set(relayedMessageCount, forKey: relayCountKey)
+        userDefaults.synchronize()
+    }
+
+    fileprivate func incrementRelayCount() {
+        relayedMessageCount += 1
+        saveRelayCount()
     }
     
     private func loadJoinedChannels() {
@@ -2655,7 +2674,11 @@ extension ChatViewModel: BitchatDelegate {
     func didUpdateMessageDeliveryStatus(_ messageID: String, status: DeliveryStatus) {
         updateMessageDeliveryStatus(messageID, status: status)
     }
-    
+
+    func didRelayPacket() {
+        incrementRelayCount()
+    }
+
     private func updateMessageDeliveryStatus(_ messageID: String, status: DeliveryStatus) {
         
         // Helper function to check if we should skip this update
