@@ -1198,6 +1198,7 @@ class BluetoothMeshService: NSObject {
                     if let data = packetToSend.toBinaryData(),
                        characteristic.properties.contains(.writeWithoutResponse) {
                         peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
+                        self?.delegate?.didRelayPacket()
                     }
                 }
             }
@@ -1235,7 +1236,7 @@ class BluetoothMeshService: NSObject {
         return Int(distance)
     }
     
-    private func broadcastPacket(_ packet: BitchatPacket) {
+    private func broadcastPacket(_ packet: BitchatPacket, isRelay: Bool = false) {
         guard let data = packet.toBinaryData() else { 
             // print("[ERROR] Failed to convert packet to binary data")
             // Add to retry queue if this is a message packet
@@ -1317,6 +1318,12 @@ class BluetoothMeshService: NSObject {
                     recipientNickname: message.recipientNickname,
                     channelKey: channelKeyData
                 )
+            }
+        }
+
+        if isRelay {
+            DispatchQueue.main.async { [weak self] in
+                self?.delegate?.didRelayPacket()
             }
         }
     }
@@ -1501,7 +1508,7 @@ class BluetoothMeshService: NSObject {
                             // Add random delay to prevent collision storms
                             let delay = Double.random(in: minMessageDelay...maxMessageDelay)
                             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                                self?.broadcastPacket(relayPacket)
+                                self?.broadcastPacket(relayPacket, isRelay: true)
                             }
                         }
                     }
@@ -1628,7 +1635,7 @@ class BluetoothMeshService: NSObject {
                         // Add random delay to prevent collision storms
                         let delay = Double.random(in: minMessageDelay...maxMessageDelay)
                         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                            self?.broadcastPacket(relayPacket)
+                            self?.broadcastPacket(relayPacket, isRelay: true)
                         }
                     }
                 }
@@ -1859,7 +1866,7 @@ class BluetoothMeshService: NSObject {
                     // Add small delay to prevent collision
                     let delay = Double.random(in: 0.1...0.3)
                     DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                        self?.broadcastPacket(relayPacket)
+                        self?.broadcastPacket(relayPacket, isRelay: true)
                     }
                 }
             } else {
@@ -1880,7 +1887,7 @@ class BluetoothMeshService: NSObject {
                     if packet.ttl > 1 {
                         var relayPacket = packet
                         relayPacket.ttl -= 1
-                        self.broadcastPacket(relayPacket)
+                        self.broadcastPacket(relayPacket, isRelay: true)
                     }
                 } else {
                     // Legacy peer disconnect (keeping for backwards compatibility)
@@ -1921,7 +1928,7 @@ class BluetoothMeshService: NSObject {
             var relayPacket = packet
             relayPacket.ttl -= 1
             if relayPacket.ttl > 0 {
-                self.broadcastPacket(relayPacket)
+                self.broadcastPacket(relayPacket, isRelay: true)
             }
             
         case .channelAnnounce:
@@ -1943,7 +1950,7 @@ class BluetoothMeshService: NSObject {
                     if packet.ttl > 1 {
                         var relayPacket = packet
                         relayPacket.ttl -= 1
-                        self.broadcastPacket(relayPacket)
+                        self.broadcastPacket(relayPacket, isRelay: true)
                     }
                 }
             }
@@ -1974,7 +1981,7 @@ class BluetoothMeshService: NSObject {
                 // Relay the ACK if not for us
                 var relayPacket = packet
                 relayPacket.ttl -= 1
-                self.broadcastPacket(relayPacket)
+                self.broadcastPacket(relayPacket, isRelay: true)
             }
             
         case .channelRetention:
@@ -1995,7 +2002,7 @@ class BluetoothMeshService: NSObject {
                     if packet.ttl > 1 {
                         var relayPacket = packet
                         relayPacket.ttl -= 1
-                        self.broadcastPacket(relayPacket)
+                        self.broadcastPacket(relayPacket, isRelay: true)
                     }
                 }
             }
@@ -2023,7 +2030,7 @@ class BluetoothMeshService: NSObject {
                 // Relay the read receipt if not for us
                 var relayPacket = packet
                 relayPacket.ttl -= 1
-                self.broadcastPacket(relayPacket)
+                self.broadcastPacket(relayPacket, isRelay: true)
             }
             
         default:

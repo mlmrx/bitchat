@@ -3,6 +3,7 @@ import SwiftUI
 struct AppInfoView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var viewModel: ChatViewModel
     
     private var backgroundColor: Color {
         colorScheme == .dark ? Color.black : Color.white
@@ -119,7 +120,15 @@ struct AppInfoView: View {
                         .font(.system(size: 14, design: .monospaced))
                         .foregroundColor(textColor)
                     }
-                    
+
+                    // Relay Stats
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader("Your Contribution")
+                        Text("Messages relayed: \(viewModel.relayedMessageCount)")
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(textColor)
+                    }
+
                     // Version
                     HStack {
                         Spacer()
@@ -225,7 +234,15 @@ struct AppInfoView: View {
                         .font(.system(size: 14, design: .monospaced))
                         .foregroundColor(textColor)
                     }
-                    
+
+                    // Relay Stats
+                    VStack(alignment: .leading, spacing: 16) {
+                        SectionHeader("Your Contribution")
+                        Text("Messages relayed: \(viewModel.relayedMessageCount)")
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(textColor)
+                    }
+
                     // Version
                     HStack {
                         Spacer()

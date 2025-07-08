@@ -20,6 +20,7 @@ This project is released into the public domain. See the [LICENSE](LICENSE) file
 - **Cover Traffic**: Timing obfuscation and dummy messages for enhanced privacy
 - **Emergency Wipe**: Triple-tap to instantly clear all data
 - **Performance Optimizations**: LZ4 message compression, adaptive battery modes, and optimized networking
+- **Relay Statistics**: Track how many messages you've helped relay to others
 
 ## Setup
 
